@@ -1,0 +1,10 @@
+{
+  "name": "Jira SVN",
+  "version": "1.0.1",
+  "manifest_version": 2,
+  "description": "Jira SVN",
+  "content_scripts": [{
+      "matches"   : ["http://project.apollo.corp.ganji.com/browse*"],
+      "js"        : ["jquery.min.js", "ccf.js", "conf.js", "script.js"]
+  }]
+}
