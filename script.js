@@ -1,6 +1,7 @@
 (function($) {
     var suffix = conf.suffix
     ,expr = conf.expr
+    ,ele = conf.ele
     ,getSvnBox = function(lastTime){
         return '<table cellpadding="2" cellspacing="0" border="0" width="100%">\
         <tbody>\
@@ -21,8 +22,9 @@
             var files = '',lastTime='';
             $(expr.svnBox).find('table').each(function(){
                 var $td = $(this).find('tr:eq(3) td');
+                var ver = $(this).find('tr:eq(1) td:eq(1)').html();
                 if($td.size()) {
-                    files += $td.html();
+                    files += $td.html().replace(/\n/g,' ').replace(/\s{4,}/g,' ').replace(/<br>/g,'<ver>'+ver+'</ver>|');
                 }
                 var d = fmtDate($(this).find('tr:eq(1) td:eq(2)').html());
                 if(lastTime<d) {
@@ -35,6 +37,13 @@
             showFiles(files, lastTime);
             return false;
         });
+    },
+    getVer = function(s){
+        var res = s.match(/<ver>(\d+)<\/ver>/);
+        if(!res) {
+            return 0;
+        }
+        return ~~res[1];
     }
     ,fmtDate = function(str) { //'Wed May 08 15:25:35 CST 2013'
         var mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sept','Oct','Nov','Dec']
@@ -52,46 +61,49 @@
         return false;
     }
     ,getResFiles = function(files) {
-        var arr = files.split('<br>'),modify={};
+        var arr = files.split('|'),modify={};
+//ccf.log(arr);//debug
         $.each(arr, function(i, s){
-            s = $.trim(s);
-            var delIndex = s.indexOf('DEL');
-            s = $.trim(s.replace(/<font.*font>/, ''));
-            if(!isValidFile(s)) {
+            var isDel = ele.isDel(s);
+            var ver = getVer(s);
+            var file = ele.clear(s);
+            if(!isValidFile(file)) {
                 return true;
             }
-            var res = s.match(/^\/(\w+)\//);
+            var res = file.match(/^\/(\w+)\//);
             if(!res) {
                 return true;
             }
             var resName = res[1];
-            modify[resName] = modify[resName] || [];
+            modify[resName] = modify[resName] || {};
 
-            s = s.replace(/^\/(\w+)\//, '');
-            s = s.replace(/\s.*$/, '');
-            s = $.trim(s);
+            file = file.replace(/^\/(\w+)\//, '').replace(/\s.*$/, '');
 
-            if(delIndex>-1 && delIndex<60) {
-                var modifyIndex = $.inArray(s, modify[resName]);
-                if( modifyIndex != -1) {
-                    modify[resName].splice(modifyIndex, 1);
-                }
-            } else if($.inArray(s, modify[resName]) == -1) {
-                modify[resName].push(s);
+            if(isDel) {
+                delete(modify[resName][file]);
+            } else if(!modify[resName][file] || modify[resName][file] < ver) {
+                modify[resName][file] = ver;
             }
         });
-        return modify;
+        var ret = {};
+        for(var resName in modify) {
+            var arr = [];
+            for(var file in modify[resName]) {
+                arr.push(file+' -r '+modify[resName][file]);
+            }
+            if(resName == 'trunk') {
+                resName = 'ganji_v3';
+            }
+            ret[resName] = arr;
+        }
+        return ret;
     }
     ,showFiles = function(files, lastTime) {
         if($('#'+expr.fid).size() == 0) $(expr.svnBox).prepend(getSvnBox(lastTime));
 
         var tmp = getResFiles(files), $files = $('#'+expr.fid).empty();
 
-        ;
         $.each(tmp, function(resName, items){
-            if(resName == 'trunk') {
-                resName = 'ganji_v3';
-            }
             $files.append(resName+'<br/>---<br/>');
             $files.append(items.sort().join('<br/>'));
             $files.append('<br/><br/>');
