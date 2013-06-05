@@ -12,6 +12,7 @@ var conf = {
     expr : {
         svnBox : '#issue_actions_container',
         svnTab : '#subversion-commits-tabpanel',
-        fid : 'js-svn-files'
+        fid : 'js-svn-files',
+        svnver : 'js-svn-ver'
     }
 };

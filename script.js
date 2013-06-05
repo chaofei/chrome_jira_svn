@@ -5,7 +5,10 @@
     ,getSvnBox = function(lastTime){
         return '<table cellpadding="2" cellspacing="0" border="0" width="100%">\
         <tbody>\
-        <tr><td bgcolor="#f0f0f0"><b>Files Changed</b><font color="#999933" style="margin-left:20px;">'+lastTime+'</font></td></tr>\
+        <tr><td bgcolor="#f0f0f0">\
+            <b>Files Changed</b><font color="#999933" style="margin-left:20px;">'+lastTime+'</font>\
+            <label style="float:right;color:#009900;"><input type="checkbox"/> 加版本号</label>\
+        </td></tr>\
         <tr><td bgcolor="#ffffff" id="'+expr.fid+'"></td></tr>\
         </tbody></table>';
     }
@@ -89,7 +92,7 @@
         for(var resName in modify) {
             var arr = [];
             for(var file in modify[resName]) {
-                arr.push(file+' -r '+modify[resName][file]);
+                arr.push(file+'<span class="'+expr.svnver+'" style="display:none;"> -r '+modify[resName][file]+'</span>');
             }
             if(resName == 'trunk') {
                 resName = 'ganji_v3';
@@ -99,7 +102,16 @@
         return ret;
     }
     ,showFiles = function(files, lastTime) {
-        if($('#'+expr.fid).size() == 0) $(expr.svnBox).prepend(getSvnBox(lastTime));
+        if($('#'+expr.fid).size() == 0) {
+            $(expr.svnBox).prepend(getSvnBox(lastTime))
+            .find(':checkbox').click(function(){
+                if($(this).is(":checked")) {
+                    $('.'+expr.svnver).show();
+                } else {
+                    $('.'+expr.svnver).hide();
+                }
+            });
+        }
 
         var tmp = getResFiles(files), $files = $('#'+expr.fid).empty();
 
